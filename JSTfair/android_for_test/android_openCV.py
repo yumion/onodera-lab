@@ -1,10 +1,8 @@
 #coding: utf-8
 import androidhelper as android
 import cv
-import json
 import time
 import numpy as np
-import os
 
 
 # 赤色のマスク
@@ -57,15 +55,12 @@ def serialStart():
     active = droid.usbserialActiveConnections()
     print('active: ', active)
 
-    return uuid
-
-#androidhelper起動
-droid = android.Android()
+    return droid, uuid
 
 path = '/storage/7E9B-5A00/Picture/'
 
 #serial通信オープン
-uuid = serialStart()
+droid, uuid = serialStart()
 
 
 cnt = 0
