@@ -1,0 +1,5 @@
+# UNIX only
+.DS_Store
+
+# pyenv
+.python-version
