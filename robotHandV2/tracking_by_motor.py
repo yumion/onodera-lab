@@ -5,29 +5,11 @@ import serial
 import time
 import sys
 
-from realsensecv import RealsenseCapture
-
+from utils.realsensecv import RealsenseCapture
+from utils.utils import calc_center, green_detect
 
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 cap = RealsenseCapture()
-
-
-def green_detect(img):
-    '''緑色のマスク生成'''
-    # HSV色空間に変換
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # 緑色のHSVの値域
-    hsv_min = np.array([30, 64, 0])
-    hsv_max = np.array([90, 255, 255])
-    mask = cv2.inRange(hsv, hsv_min, hsv_max)
-    return mask
-
-
-def calc_center(img):
-    '''重心座標(x,y)を求める'''
-    mu = cv2.moments(img, False)
-    x, y = int(mu["m10"] / (mu["m00"] + 1e-7)), int(mu["m01"] / (mu["m00"] + 1e-7))
-    return x, y
 
 
 def send_serial(motor, value, isreading=False):
@@ -44,13 +26,16 @@ def send_serial(motor, value, isreading=False):
             print(read)
 
 
+cap.start()
+time.sleep(5)
+
+
 MAX_SPEED = 20
+# GOAL_POS = cap.WIDTH // 2
 GOAL_POS = 423
 r_motor = 0
 l_motor = 0
 
-cap.start()
-time.sleep(5)
 
 # default
 params = [r_motor, l_motor, 0, 0, 9]
@@ -69,6 +54,7 @@ while True:
     print(f'G({center_pos_x}, {center_pos_y})')
 
     target_distance = cap.depth_frame.get_distance(center_pos_x, center_pos_y)
+    # GOAL_POS = int(cap.WIDTH // 2 + 3.2 / (0.0016 * target_distance * 100 + 0.0006))  # カメラ中心からロボット中心に合わせる
     error_distance = (center_pos_x - GOAL_POS) / GOAL_POS
     print(f'error: {error_distance} ({(0.0016 * target_distance * 100 + 0.0006) * abs(center_pos_x - GOAL_POS)}cm) |   target distance: {target_distance * 100}cm')
 

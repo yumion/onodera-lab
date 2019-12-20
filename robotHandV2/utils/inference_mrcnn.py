@@ -1,7 +1,6 @@
 import os
 import sys
 import cv2
-from utils import calc_center
 # cuDNNが使えないエラー回避
 import tensorflow as tf
 config = tf.ConfigProto()
@@ -49,9 +48,10 @@ class InferenceConfig(coco.CocoConfig):
     IMAGES_PER_GPU = 1
 
 
-def Inference_model():
+def Inference_model(display=False):
     config = InferenceConfig()
-    config.display()
+    if display:
+        config.display()
     # Create model object in inference mode.
     model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
     model_path = model.find_last()
@@ -63,6 +63,7 @@ def Inference_model():
 def render(result, rgb_image, target):
     N = result['rois'].shape[0]  # 検出数
     result_image = rgb_image.copy()
+    mask = None
     colors = visualize.random_colors(N)
     for i in range(N):
         '''クラス関係なく1物体ごと処理を行う'''
@@ -74,13 +75,13 @@ def render(result, rgb_image, target):
             # Bbox
             result_image = visualize.draw_box(result_image, result['rois'][i], rgb)
             # Class & Score
-            text_top = class_names[result['class_ids'][i]] + ':' + str(result['scores'][i])
+            text_top = f"ID{i:d} {class_names[result['class_ids'][i]]}: {result['scores'][i]:.3f}"
             result_image = cv2.putText(result_image, text_top,
                                        (result['rois'][i][1], result['rois'][i][0]),
                                        font, 0.7, rgb, 1, cv2.LINE_AA)
             # Mask
             mask = result['masks'][:, :, i]
             result_image = visualize.apply_mask(result_image, mask, color)
-            # log
-            print('class: {} | Score: {}'.format(class_names[result['class_ids'][i]], result['scores'][i]))
+        # log
+        print(f"ID: {i} | {class_names[result['class_ids'][i]]}: {result['scores'][i]}")
     return result_image, mask

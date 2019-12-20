@@ -6,45 +6,12 @@ import time
 import sys
 import os
 
-from realsensecv import RealsenseCapture
-
+from utils.realsensecv import RealsenseCapture
+from utils.utils import calc_center, green_detect
 
 os.system(f'sudo chmod 666 {sys.argv[1]}')
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 cap = RealsenseCapture()
-
-
-def red_detect(img):
-    '''赤色のマスク生成'''
-    # HSV色空間に変換
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # 赤色のHSVの値域1
-    hsv_min = np.array([0, 127, 0])
-    hsv_max = np.array([149, 255, 255])
-    mask1 = cv2.inRange(hsv, hsv_min, hsv_max)
-    # 赤色のHSVの値域2
-    hsv_min = np.array([150, 127, 0])
-    hsv_max = np.array([179, 255, 255])
-    mask2 = cv2.inRange(hsv, hsv_min, hsv_max)
-    return mask1 + mask2
-
-
-def green_detect(img):
-    '''緑色のマスク生成'''
-    # HSV色空間に変換
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # 緑色のHSVの値域
-    hsv_min = np.array([30, 64, 0])
-    hsv_max = np.array([90, 255, 255])
-    mask = cv2.inRange(hsv, hsv_min, hsv_max)
-    return mask
-
-
-def calc_center(img):
-    '''重心座標(x,y)を求める'''
-    mu = cv2.moments(img, False)
-    x, y = int(mu["m10"] / (mu["m00"] + 1e-7)), int(mu["m01"] / (mu["m00"] + 1e-7))
-    return x, y
 
 
 def send_serial(motor, value, isreading=False):
@@ -106,7 +73,7 @@ while True:
         params = [2, 2]  # 距離を詰める
         for i, param in enumerate(params):
             send_serial(i, param, True)
-        time.sleep(4)  # 2cm
+        time.sleep(3)  # 1.5cm
         print('reached')
 
         params = [0, 0, 0, 0]  # つかむ
@@ -143,12 +110,61 @@ for i in range(5):
         break
     if i == 4:
         print('Success!')
-        send_serial(3, 0, True)
-        time.sleep(3)
+        # send_serial(3, 0, True)
+        # time.sleep(3)
 
-params = [0, 0, 1, 0, 9]
+from cv2 import aruco
+dictionary = aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
+MAX_SPEED = 20
+GOAL_POS = cap.WIDTH // 2
+while True:
+    ret, frames = cap.read()
+    color_frame = frames[0]
+    depth_frame = frames[1]
+    # マーカーを検出
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(color_frame, dictionary)
+    if ids is not None:
+        target_pos = [int(x) for x in corners[0][0][0]]
+        print('id: ', ids[0])
+        print('corners: ', target_pos)
+        target_distance = cap.depth_frame.get_distance(target_pos[0], target_pos[1])
+        GOAL_POS = int(cap.WIDTH // 2 + 3.2 / (0.0016 * target_distance * 100 + 0.0006))  # カメラ中心からロボット中心に合わせる
+        error_distance = (target_pos[0] - GOAL_POS) / GOAL_POS
+        print(f'error: {error_distance:.3f} ({(0.0016 * target_distance * 100 + 0.0006) * abs(target_pos[0] - GOAL_POS):.2f}cm) |   target distance: {target_distance * 100:.2f}cm')
+
+        r_motor = (1 - error_distance) / 2 * MAX_SPEED
+        l_motor = (1 + error_distance) / 2 * MAX_SPEED
+
+    else:
+        r_motor = 20
+        l_motor = 1
+
+    params = [int(r_motor), int(l_motor)]
+    for i, param in enumerate(params):
+        send_serial(i, param, True)
+
+    aruco.drawDetectedMarkers(color_frame, corners, ids)  # マーカーを四角で囲む
+    cv2.line(color_frame, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
+    images = np.hstack((color_frame, depth_frame))
+    cv2.imshow('RGB', images)
+    if cv2.waitKey(200) & 0xFF == ord('q'):
+        break
+    if 0 < target_distance < 0.17:
+        print('reached!')
+        send_serial(0, 0)
+        send_serial(1, 0)
+        break
+
+
+send_serial(3, 0, True)  # 腕を下げる
+time.sleep(3)
+params = [0, 0, 1, 0, 9]  # 手を開く
 for i, param in enumerate(params):
     send_serial(i, param, True)
+
+# params = [0, 0, 1, 0, 9]
+# for i, param in enumerate(params):
+#     send_serial(i, param, True)
 
 ser.close()
 cap.release()
