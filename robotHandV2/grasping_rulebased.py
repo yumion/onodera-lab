@@ -73,7 +73,7 @@ while True:
         params = [2, 2]  # 距離を詰める
         for i, param in enumerate(params):
             send_serial(i, param, True)
-        time.sleep(3)  # 1.5cm
+        time.sleep(2)  # 1cm
         print('reached')
 
         params = [0, 0, 0, 0]  # つかむ
