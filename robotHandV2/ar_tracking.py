@@ -62,8 +62,8 @@ while True:
         l_motor = (1 + error_distance) / 2 * MAX_SPEED
 
     else:
-        r_motor = 20
-        l_motor = 1
+        r_motor = 1
+        l_motor = 20
 
     params = [int(r_motor), int(l_motor)]
     for i, param in enumerate(params):

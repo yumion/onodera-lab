@@ -73,7 +73,7 @@ while True:
         params = [2, 2]  # 距離を詰める
         for i, param in enumerate(params):
             send_serial(i, param, True)
-        time.sleep(2)  # 1cm
+        time.sleep(3)  # 1.5cm
         print('reached')
 
         params = [0, 0, 0, 0]  # つかむ
@@ -87,7 +87,7 @@ while True:
         time.sleep(2)
         break
     else:
-        params = [2, 2, 1, 0, int(vertical_deg)]
+        params = [3, 3, 1, 0, int(vertical_deg)]
         for i, param in enumerate(params):
             send_serial(i, param, True)
 
@@ -136,8 +136,8 @@ while True:
         l_motor = (1 + error_distance) / 2 * MAX_SPEED
 
     else:
-        r_motor = 20
-        l_motor = 1
+        r_motor = 0
+        l_motor = 20
 
     params = [int(r_motor), int(l_motor)]
     for i, param in enumerate(params):
@@ -146,7 +146,7 @@ while True:
     aruco.drawDetectedMarkers(color_frame, corners, ids)  # マーカーを四角で囲む
     cv2.line(color_frame, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     images = np.hstack((color_frame, depth_frame))
-    cv2.imshow('RGB', images)
+    cv2.imshow('RealSense', images)
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
     if 0 < target_distance < 0.17:
@@ -158,13 +158,11 @@ while True:
 
 send_serial(3, 0, True)  # 腕を下げる
 time.sleep(3)
-params = [0, 0, 1, 0, 9]  # 手を開く
+
+
+params = [0, 0, 1, 0, 9]
 for i, param in enumerate(params):
     send_serial(i, param, True)
-
-# params = [0, 0, 1, 0, 9]
-# for i, param in enumerate(params):
-#     send_serial(i, param, True)
 
 ser.close()
 cap.release()
