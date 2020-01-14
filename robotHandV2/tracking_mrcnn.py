@@ -1,11 +1,12 @@
 # coding: utf-8
 import time
 import sys
+# argv[1]: port, argv[2]: class
 import numpy as np
 import cv2
 from utils.utils import calc_center
 from ncc.video.utils import FPS
-
+# to Arduino
 import serial
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 # RealSense
@@ -14,7 +15,6 @@ cap = RealsenseCapture()
 # Mask R-CNN
 from utils.inference_mrcnn import Inference_model, render
 model = Inference_model()
-
 
 # filtered_classNames = ['BG', 'bottle', 'cup', 'banana', 'orange', 'remote', 'cell phone']
 
@@ -35,7 +35,7 @@ def send_serial(motor, value, isreading=False):
 
 cap.start()
 fps = FPS()
-# time.sleep(5)
+# time.sleep(2)
 
 MAX_SPEED = 20
 GOAL_POS = cap.WIDTH // 2
@@ -88,7 +88,7 @@ while True:
     cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
 
-    if 0 < target_distance < 0.21 or mask_pixels / (mask.shape[0] * mask.shape[1]) > 0.3:
+    if 0 < target_distance < 0.23:
         print('reached!')
         break
 

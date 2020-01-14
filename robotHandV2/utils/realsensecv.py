@@ -22,7 +22,7 @@ class RealsenseCapture:
         # Align the angle of view
         self.align = rs.align(rs.stream.color)
         # Start streaming
-        self.pipeline.start(self.config)
+        self.profile = self.pipeline.start(self.config)
         print('pipeline start')
 
     def read(self, is_filtered=False, raw_frame=False):

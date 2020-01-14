@@ -113,6 +113,8 @@ for i in range(5):
         # send_serial(3, 0, True)
         # time.sleep(3)
 
+"""
+# ホームポジションへ戻る
 from cv2 import aruco
 dictionary = aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
 MAX_SPEED = 20
@@ -167,3 +169,4 @@ for i, param in enumerate(params):
 ser.close()
 cap.release()
 cv2.destroyAllWindows()
+"""
