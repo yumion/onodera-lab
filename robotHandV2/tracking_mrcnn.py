@@ -55,8 +55,13 @@ while True:
         break
 
     # Run detection
-    result = model.detect([rgb_image], verbose=0)[0]
-    result_image, mask = render(result, rgb_image.copy(), sys.argv[2])
+    padding_image = np.zeros((960, 1280, 3), np.uint8)
+    padding_image[240:720, 320:960] = rgb_image  # 近距離でも遠くに見えるようにパディングする
+    result = model.detect([padding_image], verbose=0)[0]
+    result_image, mask = render(result, padding_image.copy(), sys.argv[2])
+    result_image = result_image[240:720, 320:960]  # paddingを元に戻す
+    if mask is not None:
+        mask = mask[240:720, 320:960]
     fps.calculate(result_image)
     if mask is None:
         cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
@@ -81,14 +86,14 @@ while True:
     r_motor = (1 - error_distance) / 2 * MAX_SPEED
     l_motor = (1 + error_distance) / 2 * MAX_SPEED
     params = [int(r_motor), int(l_motor)]
-    # for i, param in enumerate(params):
-    #     send_serial(i, param, True)
+    for i, param in enumerate(params):
+        send_serial(i, param, True)
 
     cv2.circle(result_image, (center_pos[0], center_pos[1]), 5, (0, 0, 255), thickness=-1)
     cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
 
-    if 0 < target_distance < 0.23:
+    if 0 < target_distance < 0.16:
         print('reached!')
         break
 

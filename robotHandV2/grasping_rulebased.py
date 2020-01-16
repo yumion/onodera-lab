@@ -29,12 +29,13 @@ def send_serial(motor, value, isreading=False):
 
 
 CENTER_LINE = 423
+horizon_deg = 9
 
 cap.start()
 time.sleep(5)
 
 # default
-params = [0, 0, 1, 0, 9]
+params = [0, 0, 1, 0, horizon_deg]  # r_motor, l_motor, grasp, vertical, horizon
 for i, param in enumerate(params):
     send_serial(i, param, True)
 
@@ -60,9 +61,10 @@ while True:
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
 
-    vertical_pos = (0.0016 * target_distance * 100 - 0.0004) * (center_pos_x - CENTER_LINE)  # ピクセル間距離(cm)
-    # print('vertical position: ', vertical_pos)
-    vertical_deg = (max(min(vertical_pos // 0.0216, 90), -90) + 90) // 10  # 角度に変換して上限下限を制限して-90~90を0~18に変換
+    if target_distance != 0:
+        horizon_pos = (0.0016 * target_distance * 100 - 0.0004) * (center_pos_x - CENTER_LINE)  # ピクセル間距離(cm)
+        # print('horizon position: ', horizon_pos)
+        horizon_deg = (max(min(horizon_pos // 0.0216, 90), -90) + 90) // 10  # 角度に変換して上限下限を制限して-90~90を0~18に変換
 
     depth_pixels = (depth_frame > 0).sum()
     print('Depth value: ', depth_pixels / start_depth_pixels)
@@ -73,7 +75,7 @@ while True:
         params = [2, 2]  # 距離を詰める
         for i, param in enumerate(params):
             send_serial(i, param, True)
-        time.sleep(3)  # 1.5cm
+        time.sleep(4)  # 2cm
         print('reached')
 
         params = [0, 0, 0, 0]  # つかむ
@@ -87,7 +89,7 @@ while True:
         time.sleep(2)
         break
     else:
-        params = [3, 3, 1, 0, int(vertical_deg)]
+        params = [3, 3, 1, 0, int(horizon_deg)]
         for i, param in enumerate(params):
             send_serial(i, param, True)
 
@@ -156,7 +158,7 @@ while True:
         send_serial(0, 0)
         send_serial(1, 0)
         break
-
+"""
 
 send_serial(3, 0, True)  # 腕を下げる
 time.sleep(3)
@@ -169,4 +171,3 @@ for i, param in enumerate(params):
 ser.close()
 cap.release()
 cv2.destroyAllWindows()
-"""

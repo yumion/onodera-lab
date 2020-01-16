@@ -40,7 +40,7 @@ bg_removed = np.where((depth_image_3d > clipping_distance) | (
 
 old_gray = cv2.cvtColor(bg_removed, cv2.COLOR_BGR2GRAY)
 p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
-print('start: ', p0)
+# print('start: ', p0)
 
 # Create a mask image for drawing purposes
 mask = np.zeros_like(old_frame)
@@ -57,8 +57,8 @@ while True:
     if p1 is not None:
         good_new = p1[st == 1]
         good_old = p0[st == 1]
-        print('pre: ', good_old)
-        print('next: ', good_new)
+        # print('pre: ', good_old)
+        # print('next: ', good_new)
     else:
         break
 
