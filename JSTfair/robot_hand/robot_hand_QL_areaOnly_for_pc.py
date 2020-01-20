@@ -22,7 +22,7 @@ AREA_THRESH = 20  # 赤色物体面積の閾値．0~100で規格化してある
 ADD_TRAIN_MODE = True
 '''学習するときはFalse，学習済みのモデルを使用するときはTrue'''
 # 使うq_tableのファイル名を"trained_q_table.npy"とすること
-TEST_MODE = False
+TEST_MODE = True
 
 
 
@@ -34,7 +34,6 @@ for file in os.listdir('/dev'):
         ser.port = '/dev/'+file
         ser.open()
 time.sleep(2)  # シリアルモニタを開く(開いてから信号を送信するまで2秒待つ必要がある)
-
 
 class Arduino:
     '''Arduino制御のモータを動かす'''
@@ -163,7 +162,7 @@ class  Environment:
         self.num_states = 2  # 課題の状態の数(面積とその変化量)
         self.num_actions = 4  # ロボットハンドの行動（前進，後退，右旋回，左旋回，握る，離す，止まる）
         self.agent = Agent(self.num_states, self.num_actions)  # 環境内で行動するAgentを生成
-        self.video = cv2.VideoCapture(1)  # カメラ起動
+        self.video = cv2.VideoCapture(0)  # カメラ起動
 
     def red_detect(self, img):
         '''赤色のマスク'''
