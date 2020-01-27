@@ -8,6 +8,8 @@ from utils.utils import calc_center
 from ncc.video.utils import FPS
 # to Arduino
 import serial
+import os
+os.system(f'sudo chmod 666 {sys.argv[1]}')
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 # RealSense
 from utils.realsensecv import RealsenseCapture
@@ -43,7 +45,7 @@ r_motor = 0
 l_motor = 0
 
 # default
-params = [r_motor, l_motor, 0, 0, 9]
+params = [r_motor, l_motor, 1, 0, 9]
 for i, param in enumerate(params):
     send_serial(i, param, True)
 
@@ -54,6 +56,9 @@ while True:
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
 
+    params = [0, 0]
+    for i, param in enumerate(params):
+        send_serial(i, param, True)
     # Run detection
     padding_image = np.zeros((960, 1280, 3), np.uint8)
     padding_image[240:720, 320:960] = rgb_image  # 近距離でも遠くに見えるようにパディングする
@@ -66,6 +71,7 @@ while True:
     if mask is None:
         cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
         cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
+        send_serial(1, MAX_SPEED, True)
         continue
 
     # Distance
@@ -78,7 +84,8 @@ while True:
     target_distance = cap.depth_frame.get_distance(center_pos[0], center_pos[1])
 
     # control dc motor
-    GOAL_POS = int(cap.WIDTH // 2 + 3.2 / (0.0016 * target_distance * 100 + 0.0006))  # カメラ中心からロボット中心に合わせる
+    # GOAL_POS = int(cap.WIDTH // 2 + 3.2 / (0.0016 * target_distance * 100 + 0.0006))  # カメラ中心からロボット中心に合わせる
+    GOAL_POS = 423
     # print(GOAL_POS)
     error_distance = (center_pos[0] - GOAL_POS) / GOAL_POS
     print(f'error: {error_distance:.4f} ({(0.0016 * target_distance * 100 + 0.0006) * abs(center_pos[0] - GOAL_POS):.3f}cm) |   target distance: {target_distance * 100:.3f}cm')
@@ -93,7 +100,7 @@ while True:
     cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
 
-    if 0 < target_distance < 0.16:
+    if 0 < target_distance < 0.24:
         print('reached!')
         break
 

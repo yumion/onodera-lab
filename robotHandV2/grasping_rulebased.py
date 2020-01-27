@@ -7,7 +7,7 @@ import sys
 import os
 
 from utils.realsensecv import RealsenseCapture
-from utils.utils import calc_center, green_detect
+from utils.utils import calc_center, green_detect, red_detect
 
 os.system(f'sudo chmod 666 {sys.argv[1]}')
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
@@ -49,6 +49,7 @@ while True:
     color_frame = frames[0]
     depth_frame = frames[1]
 
+    # mask = red_detect(color_frame.copy())
     mask = green_detect(color_frame.copy())
     center_pos_x, center_pos_y = calc_center(mask)
     # print(f'G({center_pos_x}, {center_pos_y})')
