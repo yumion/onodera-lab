@@ -81,18 +81,36 @@ while True:
         params = [2, 2]  # 距離を詰める
         for i, param in enumerate(params):
             send_serial(i, param, True)
-        time.sleep(4)  # 2cm
+        for _ in range(20):
+            ret, frames = cap.read()
+            images = np.hstack(frames)
+            out.write(images)  # 動画を保存
+            cv2.imshow('RealSense', images)
+            cv2.waitKey(200)
+        # time.sleep(4)  # 2cm
         print('reached')
 
         params = [0, 0, 0, 0]  # つかむ
         for i, param in enumerate(params):
             send_serial(i, param, True)
         print('grasp')
-        time.sleep(2)
+        for _ in range(10):
+            ret, frames = cap.read()
+            images = np.hstack(frames)
+            out.write(images)  # 動画を保存
+            cv2.imshow('RealSense', images)
+            cv2.waitKey(200)
+        # time.sleep(2)
 
         send_serial(3, 1, True)  # 持ち上げる
         print('bring up')
-        time.sleep(2)
+        for _ in range(10):
+            ret, frames = cap.read()
+            images = np.hstack(frames)
+            out.write(images)  # 動画を保存
+            cv2.imshow('RealSense', images)
+            cv2.waitKey(200)
+        # time.sleep(2)
         break
     else:
         params = [3, 3, 1, 0, int(horizon_deg)]
@@ -105,6 +123,7 @@ for i in range(5):
     color_frame = frames[0]
     depth_frame = frames[1]
     images = np.hstack((color_frame, depth_frame))
+    out.write(images)  # 動画を保存
     cv2.imshow('RealSense', images)
     if cv2.waitKey(1000) & 0xFF == ord('q'):
         break
@@ -169,7 +188,13 @@ while True:
 
 
 send_serial(3, 0, True)  # 腕を下げる
-time.sleep(3)
+for _ in range(15):
+    ret, frames = cap.read()
+    images = np.hstack(frames)
+    out.write(images)  # 動画を保存
+    cv2.imshow('RealSense', images)
+    cv2.waitKey(200)
+# time.sleep(3)
 
 
 params = [0, 0, 1, 0, 9]
