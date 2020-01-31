@@ -4,12 +4,24 @@ import numpy as np
 import serial
 import time
 import sys
+import os
 
 from utils.realsensecv import RealsenseCapture
 from utils.utils import calc_center, green_detect
 
+os.system(f'sudo chmod 666 {sys.argv[1]}')
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 cap = RealsenseCapture()
+# 俯瞰カメラ
+cap2 = cv2.VideoCapture(0)
+cap2.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap2.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+cap2.set(cv2.CAP_PROP_FPS, 30)
+
+# 動画を保存
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out1 = cv2.VideoWriter('output_FPS.mp4', fourcc, 5.0, (640 * 2, 480))
+out2 = cv2.VideoWriter('output_TPS.mp4', fourcc, 5.0, (640, 480))
 
 
 def send_serial(motor, value, isreading=False):
@@ -36,13 +48,15 @@ GOAL_POS = 423
 r_motor = 0
 l_motor = 0
 
-
 # default
 params = [r_motor, l_motor, 0, 0, 9]
 for i, param in enumerate(params):
     send_serial(i, param, True)
 
 while True:
+    # 俯瞰カメラ
+    ret2, frame2 = cap2.read()
+    # 主観カメラ
     ret, frames = cap.read(is_filtered=False)
     color_frame = frames[0]
     depth_frame = frames[1]
@@ -69,7 +83,9 @@ while True:
     cv2.circle(mask_RGB, (center_pos_x, center_pos_y), 5, (0, 0, 255), thickness=-1)
     cv2.line(mask_RGB, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     images = np.hstack((color_frame, mask_RGB))
-    cv2.imshow('RGB', images)
+    out1.write(images)  # 動画を保存
+    out2.write(frame2)  # 動画を保存
+    cv2.imshow('RGB', np.hstack((frame2, images)))
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
     if 0 < target_distance < 0.16 or mask_pixels / (mask.shape[0] * mask.shape[1]) > 0.3:
@@ -82,4 +98,7 @@ send_serial(0, 0)
 send_serial(1, 0)
 ser.close()
 cap.release()
+cap2.release()
+out1.release()
+out2.release()
 cv2.destroyAllWindows()

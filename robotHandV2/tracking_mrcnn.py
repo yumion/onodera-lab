@@ -21,6 +21,11 @@ model = Inference_model()
 # filtered_classNames = ['BG', 'bottle', 'cup', 'banana', 'orange', 'remote', 'cell phone']
 
 
+# 動画を保存
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output_tracking.mp4', fourcc, 5.0, (640 * 2, 480))
+
+
 def send_serial(motor, value, isreading=False):
     '''シリアル通信'''
     send = motor * 32 + value  # 8bitを10進数で表記
@@ -50,6 +55,7 @@ for i, param in enumerate(params):
     send_serial(i, param, True)
 
 while True:
+    # 主観カメラ
     ret, images = cap.read()
     rgb_image = images[0]
     depth_image = images[1]
@@ -67,7 +73,7 @@ while True:
     result_image = result_image[240:720, 320:960]  # paddingを元に戻す
     if mask is not None:
         mask = mask[240:720, 320:960]
-    fps.calculate(result_image)
+    # fps.calculate(result_image)  # FPSを測定
     if mask is None:
         cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
         cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
@@ -98,6 +104,7 @@ while True:
 
     cv2.circle(result_image, (center_pos[0], center_pos[1]), 5, (0, 0, 255), thickness=-1)
     cv2.line(result_image, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
+    out.write(np.hstack((result_image, depth_image)))  # 動画を保存
     cv2.imshow('Mask R-CNN', np.hstack((result_image, depth_image)))
 
     if 0 < target_distance < 0.24:
@@ -108,4 +115,5 @@ send_serial(0, 0)
 send_serial(1, 0)
 ser.close()
 cap.release()
+out.release()
 cv2.destroyAllWindows()

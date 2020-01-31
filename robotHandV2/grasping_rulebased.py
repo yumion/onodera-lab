@@ -13,6 +13,10 @@ os.system(f'sudo chmod 666 {sys.argv[1]}')
 ser = serial.Serial(port=sys.argv[1], baudrate=115200)
 cap = RealsenseCapture()
 
+# 動画を保存
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output_grasping.mp4', fourcc, 5.0, (640 * 2, 480))
+
 
 def send_serial(motor, value, isreading=False):
     '''シリアル通信'''
@@ -58,6 +62,7 @@ while True:
     cv2.circle(color_frame, (center_pos_x, center_pos_y), 5, (0, 0, 255), thickness=-1)
     cv2.line(color_frame, (CENTER_LINE, 0), (CENTER_LINE, cap.HEGIHT), (255, 0, 0))
     images = np.hstack((color_frame, depth_frame))
+    out.write(images)  # 動画を保存
     cv2.imshow('RealSense', images)
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
@@ -116,12 +121,13 @@ for i in range(5):
         # send_serial(3, 0, True)
         # time.sleep(3)
 
-"""
+
 # ホームポジションへ戻る
 from cv2 import aruco
 dictionary = aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
 MAX_SPEED = 20
 GOAL_POS = cap.WIDTH // 2
+
 while True:
     ret, frames = cap.read()
     color_frame = frames[0]
@@ -151,6 +157,7 @@ while True:
     aruco.drawDetectedMarkers(color_frame, corners, ids)  # マーカーを四角で囲む
     cv2.line(color_frame, (GOAL_POS, 0), (GOAL_POS, cap.HEGIHT), (255, 0, 0))
     images = np.hstack((color_frame, depth_frame))
+    out.write(images)  # 動画を保存
     cv2.imshow('RealSense', images)
     if cv2.waitKey(200) & 0xFF == ord('q'):
         break
@@ -159,7 +166,7 @@ while True:
         send_serial(0, 0)
         send_serial(1, 0)
         break
-"""
+
 
 send_serial(3, 0, True)  # 腕を下げる
 time.sleep(3)
@@ -171,4 +178,5 @@ for i, param in enumerate(params):
 
 ser.close()
 cap.release()
+out.release()
 cv2.destroyAllWindows()
